@@ -1,0 +1,15 @@
+[general]
+name=GeoStructure
+description=Style geological units, faults, and bedding measurements on a QGIS map.
+about=Choose your own attribute fields to visualize geological vector data.
+version=0.7.7
+qgisMinimumVersion=3.28
+qgisMaximumVersion=3.99
+author=Kaung Si Thu
+icon=icon.svg
+email=
+category=Vector
+experimental=True
+homepage=https://github.com/kaungsithugis/geostructure#readme
+repository=https://github.com/kaungsithugis/geostructure
+tracker=https://github.com/kaungsithugis/geostructure/issues
