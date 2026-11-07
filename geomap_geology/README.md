@@ -1,6 +1,15 @@
 # GeoStructure
 
-A QGIS 3 plugin for styling vector layers already loaded in your project.
+GeoStructure v0.12.0 for QGIS 3, by Kaung Si Thu.
+
+Map planar and linear structures from CSV, style geological maps, create
+Schmidt or Wulff stereonets, analyze orientations and generate DEM cross sections.
+The compact Stereonet dialog separates Data, Plot and Analysis tabs.
+
+## License
+
+GNU General Public License, version 2 or (at your option) any later version.
+See LICENSE. This is an experimental release, tested with QGIS 3.40.6.
 
 1. In QGIS, open **Plugins → Manage and Install Plugins → Install from ZIP**.
 2. Select the ZIP as downloaded, install it, and enable the plugin if needed.
@@ -74,7 +83,101 @@ station,latitude,longitude,trend,plunge
 DEMO-L01,21.990,96.080,45,20
 ```
 
-## License
+## Cross Section
 
-GeoStructure is distributed under the GNU General Public License, version 2
-or (at your option) any later version. See LICENSE.
+Open **Plugins → GeoStructure → Cross Section**. Select a DEM with elevation
+in metres in band 1. Optionally select geological polygons, mapped contact
+or fault lines, and a bedding point layer with RHR strike and dip fields.
+Use **Pick A and A′ on map** to click the two endpoints, then generate the
+section. Bedding corridor width is measured from the line to either side.
+Positive apparent dip descends toward A′. Projected measurements are drawn
+at the DEM elevation on the section, and the CSV records their signed lateral
+offsets. The plot reports vertical exaggeration and shows gaps for NoData.
+
+Save the surface section as PNG or SVG, or export profile samples, unit
+intervals, mapped line crossings and projected bedding together as CSV.
+The section uses a local metric projection and the azimuth from A toward A′.
+
+The map shows A in green and A′ in red, joined by a blue line. The profile
+uses bilinear interpolation between DEM pixel centers where all four
+neighbors are valid. Near raster edges or NoData, it uses the source sample.
+
+Cross Section includes an optional Station ID field. Choose a station/name
+column to identify each projected plane. The result window's Show Label
+and Apparent Dip checkbox controls both screen labels and image exports.
+Labels show the signed apparent dip in the section, and the CSV includes
+station ID, true dip and apparent dip. With no station field, feature IDs
+are used. Crowded symbols and labels move to free positions with leader lines.
+If the view cannot fit all marks, a message reports the hidden count.
+
+Use Zoom in, Zoom out, and Reset view in the section result window. Mouse
+wheel zoom follows the cursor position, and dragging pans horizontally.
+The image export uses the current view. CSV export includes the full section.
+Structural Analysis has been removed from this release.
+
+## Geological age colors
+
+Geomap Visualizer → Geological age (CGMW / ICS colors) uses an age field.
+Supported names include the Phanerozoic periods, the Cenozoic epochs,
+Lower/Upper Cretaceous, Lower/Middle/Upper Jurassic and Triassic, and broad
+Precambrian, Proterozoic and Archean. Matching ignores case, extra spaces
+and underscores. Early/Lower and Late/Upper prefixes are equivalent for
+supported subdivisions. Unrecognized values and nulls use gray. Local map
+codes (e.g. K1) and combined age ranges must be converted to supported age
+names before styling. The dialog lists unrecognized values after applying.
+Cross Section reads the resulting polygon colors when regenerated.
+
+Source: CGMW RGB colour code v2022 (ICS 2022/02 subdivisions),
+https://ccgm.org/wp-content/uploads/2016/11/Colour-2022-V7-poster.pdf
+Carboniferous RGB is clarified using the CGMW 2013 chart,
+https://ccgm.org/wp-content/uploads/2016/11/cms_Stratigraphic-Chart_Codes-CMYK_RGB.pdf
+
+## Analysis inside Stereonet
+
+The Analysis selector offers a mean plane (principal pole) and a fold axis /
+best-fit girdle for Plane data, or a principal line orientation for Line data.
+At least three valid measurements are required. Fits use the normalized
+orientation tensor of plane poles or axial line directions. The largest
+eigenvector gives the principal pole/line; the smallest gives the normal
+to the fitted girdle. Repeated eigenvalues that prevent a unique result
+are rejected. The girdle normal can represent a cylindrical fold axis
+when bedding poles form a girdle. Other structure types require their own
+geological interpretation.
+
+The screen reports normalized eigenvalues and RMS angular deviation
+(from the fitted pole/line or from the girdle plane, as appropriate).
+Lower-hemisphere fits are shown with a black cross and a purple plane.
+PNG/SVG exports include these overlays. Save analysis CSV exports the fit
+orientation, eigenvalues, gap, count and RMS deviation. Input filtering
+and field selection are the same as the Stereonet plot.
+Method reference:
+https://mplstereonet.readthedocs.io/en/latest/_modules/mplstereonet/analysis.html
+
+## Joint strike rose and vector mean
+
+In Stereonet choose Plane → Joint Plane, load strike/dip or dip-direction/dip
+measurements, then Analysis → Joint strike rose + vector mean. Select 5°,
+10°, 15°, 20°, or 30° bins. Strikes are folded to 0–180° and repeated on the
+opposite half of the rose. Sector area is proportional to bin count.
+The red line is the axial vector mean, calculated by doubling strike
+angles, averaging their unit vectors, and halving the resulting angle.
+R is the mean resultant length of these doubled angles (0–1).
+An effectively zero resultant has no defined mean. This mean summarizes
+strike only; it does not estimate mean dip. Mixed joint sets should be
+separated before interpreting a single mean. PNG/SVG exports show the rose,
+while Save analysis CSV exports the mean, R, count and bin counts.
+
+## Projection and principal orientation axes
+
+On the Plot tab choose Schmidt Net (equal area) or Wulff Net (equal angle).
+The projection applies to plane traces, poles, lines and fitted overlays,
+including PNG/SVG exports. Rose diagrams retain their polar diagram.
+Analytical fits are calculated in three dimensions and are independent
+of the display projection.
+
+Analysis → Principal orientation axes reports E1, E2, E3 and their normalized
+eigenvalues. These are axes of the orientation tensor, ordered by descending
+eigenvalue. Repeated eigenvalues prevent a unique set of three axes and are
+reported. E1/E2/E3 describe the measured orientation distribution.
+Estimating stress axes requires fault-slip orientations and movement sense,
+as well as a stress inversion method and its assumptions.
