@@ -31,19 +31,19 @@ def strike_summary(strikes, width):
 def draw_rose(painter, bounds, result):
     width, height = bounds.width(), bounds.height()
     painter.fillRect(bounds, QColor("white"))
-    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     center = QPointF(width/2, height/2)
     radius = min(width, height)/2 - 65
     counts, bin_width = result["bins"], result["bin_width_deg"]
     maximum = max(counts)
     painter.setPen(QColor("#233444"))
-    painter.drawText(QRect(0, 5, width, 25), Qt.AlignCenter, "Joint strike rose · axial")
+    painter.drawText(QRect(0, 5, width, 25), Qt.AlignmentFlag.AlignCenter, "Joint strike rose · axial")
     def point(angle, length):
         angle = math.radians(angle)
         return center + QPointF(math.sin(angle)*length, -math.cos(angle)*length)
     for fraction in (0.25, 0.5, 0.75, 1):
         painter.setPen(QPen(QColor("#cbd5dd"), 1))
-        painter.setBrush(Qt.NoBrush)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawEllipse(center, radius*fraction, radius*fraction)
     painter.setPen(QPen(QColor("#365c76"), 1))
     painter.setBrush(QColor("#8db7cf"))
@@ -66,7 +66,7 @@ def draw_rose(painter, bounds, result):
     painter.setPen(QColor("#233444"))
     for text, angle in (("N", 0), ("E", 90), ("S", 180), ("W", 270)):
         painter.drawText(point(angle, radius+16)+QPointF(-5, 5), text)
-    painter.drawText(QRect(0, height-49, width, 20), Qt.AlignCenter,
+    painter.drawText(QRect(0, height-49, width, 20), Qt.AlignmentFlag.AlignCenter,
                      f"n = {result['n']} · bin {bin_width}° · outer ring count {maximum}")
-    painter.drawText(QRect(0, height-27, width, 20), Qt.AlignCenter,
+    painter.drawText(QRect(0, height-27, width, 20), Qt.AlignmentFlag.AlignCenter,
                      "Red: axial vector mean · sector area ∝ count · opposite bins repeated")

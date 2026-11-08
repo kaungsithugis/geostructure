@@ -16,10 +16,10 @@ from .age_colors import age_renderer
 
 
 MODES = (
-    ("Geological units", QgsMapLayerProxyModel.PolygonLayer, "Unit field"),
-    ("Faults", QgsMapLayerProxyModel.LineLayer, "Fault type field"),
-    ("Bedding (right-hand-rule strike)", QgsMapLayerProxyModel.PointLayer, "Strike field"),
-    ("Geological age (CGMW / ICS colors)", QgsMapLayerProxyModel.PolygonLayer, "Age field"),
+    ("Geological units", QgsMapLayerProxyModel.Filter.PolygonLayer, "Unit field"),
+    ("Faults", QgsMapLayerProxyModel.Filter.LineLayer, "Fault type field"),
+    ("Bedding (right-hand-rule strike)", QgsMapLayerProxyModel.Filter.PointLayer, "Strike field"),
+    ("Geological age (CGMW / ICS colors)", QgsMapLayerProxyModel.Filter.PolygonLayer, "Age field"),
 )
 PALETTE = (
     "#e5bd79", "#a9c58f", "#c3afd4", "#eca598", "#90c9d3", "#e4d787",
@@ -118,8 +118,8 @@ class StyleDialog(QDialog):
         self.form.addRow("Map layer", self.layers)
         self.form.addRow("Attribute", self.field)
         self.form.addRow("Dip field (optional)", self.dip)
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttons.button(QDialogButtonBox.Ok).setText("Apply style")
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Apply style")
         self.form.addRow(self.buttons)
         self.buttons.accepted.connect(self.apply)
         self.buttons.rejected.connect(self.reject)
@@ -158,9 +158,9 @@ class StyleDialog(QDialog):
         if dip and layer.labelsEnabled():
             answer = QMessageBox.question(
                 self, self.windowTitle(), "Replace the current layer labels with dip values?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No,
             )
-            if answer != QMessageBox.Yes:
+            if answer != QMessageBox.StandardButton.Yes:
                 return
         layer.setRenderer(renderer)
         if dip:

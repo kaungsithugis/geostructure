@@ -1,10 +1,17 @@
 # GeoStructure
 
-GeoStructure v0.12.0 for QGIS 3, by Kaung Si Thu.
+GeoStructure v0.12.1 for QGIS 3, by Kaung Si Thu.
 
 Map planar and linear structures from CSV, style geological maps, create
 Schmidt or Wulff stereonets, analyze orientations and generate DEM cross sections.
 The compact Stereonet dialog separates Data, Plot and Analysis tabs.
+
+## 0.12.1 compatibility maintenance
+
+Corrected the 61 unscoped Qt/QGIS enum references reported by the QGIS
+repository checker and Cross Section Flake8 E731. This is based on public
+0.12.0 and excludes the held 0.13.0 fault-slip draft. No analysis algorithms
+were changed. See QT_COMPATIBILITY.md for verification and release limits.
 
 ## License
 

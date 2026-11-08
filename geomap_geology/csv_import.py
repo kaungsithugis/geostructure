@@ -117,8 +117,8 @@ class CsvImportDialog(QDialog):
         self.world = QCheckBox("Add offline world basemap beneath project layers")
         self.world.setChecked(not QgsProject.instance().mapLayers())
         self.form.addRow(self.world)
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.plot = buttons.button(QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.plot = buttons.button(QDialogButtonBox.StandardButton.Ok)
         self.plot.setText("Save and plot")
         self.plot.setEnabled(False)
         buttons.accepted.connect(self.import_points)
@@ -184,13 +184,13 @@ class CsvImportDialog(QDialog):
                 answer = QMessageBox.question(
                     self, self.windowTitle(),
                     f"Skip {len(rejected)} invalid record(s)? Affected CSV lines include {sample}.",
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No,
                 )
-                if answer != QMessageBox.Yes:
+                if answer != QMessageBox.StandardButton.Yes:
                     return
             output, _ = QFileDialog.getSaveFileName(
                 self, "Save measurement layer", str(Path(self.path).with_suffix(".gpkg")),
-                "GeoPackage (*.gpkg)", options=QFileDialog.DontConfirmOverwrite,
+                "GeoPackage (*.gpkg)", options=QFileDialog.Option.DontConfirmOverwrite,
             )
             if not output:
                 return
@@ -222,7 +222,7 @@ class CsvImportDialog(QDialog):
         result = QgsVectorFileWriter.writeAsVectorFormatV3(
             source, str(target), project.transformContext(), options,
         )
-        if result[0] != QgsVectorFileWriter.NoError:
+        if result[0] != QgsVectorFileWriter.WriterError.NoError:
             raise ValueError(f"Could not save the GeoPackage. {result[1]}")
         layer = QgsVectorLayer(f"{target}|layername={options.layerName}", source.name(), "ogr")
         if not layer.isValid():

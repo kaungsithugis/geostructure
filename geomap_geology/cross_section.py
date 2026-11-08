@@ -139,7 +139,7 @@ def build_section(start, end, canvas_crs, dem, count, corridor, units, unit_fiel
                 for part in parts(geometry.intersection(section)):
                     distances = [position(point)[0] for point in part.vertices()]
                     if distances and max(distances) - min(distances) > 0.001:
-                        intervals.append((min(distances), max(distances), name, color.name(QColor.HexArgb)))
+                        intervals.append((min(distances), max(distances), name, color.name(QColor.NameFormat.HexArgb)))
         finally:
             renderer.stopRender(context)
     if faults:
@@ -164,6 +164,11 @@ def build_section(start, end, canvas_crs, dem, count, corridor, units, unit_fiel
                                          apparent_dip(dip, (strike + 90) % 360, bearing),
                                          str(feature[station_field]) if station_field else str(feature.id())))
     return profile, sorted(intervals), sorted(crossings, key=lambda row: row[0]), sorted(measurements, key=lambda row: row[0]), bearing
+
+
+def event_x(event):
+    """Qt6 uses floating-point position(); retain older Qt5 event support."""
+    return event.position().x() if hasattr(event, "position") else event.pos().x()
 
 
 class SectionPlot(QWidget):
@@ -197,20 +202,20 @@ class SectionPlot(QWidget):
         self.set_view(0, self.data[0][-1][0])
 
     def wheelEvent(self, event):
-        fraction = (event.pos().x() - 72) / max(1, self.width() - 108)
+        fraction = (event_x(event) - 72) / max(1, self.width() - 108)
         self.zoom(1.35 if event.angleDelta().y() > 0 else 1 / 1.35, fraction)
         event.accept()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.drag_x = event.pos().x()
-            self.setCursor(Qt.ClosedHandCursor)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_x = event_x(event)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
     def mouseMoveEvent(self, event):
         if self.drag_x is not None:
             span = self.view_end - self.view_start
-            shift = (self.drag_x - event.pos().x()) * span / max(1, self.width() - 108)
-            self.drag_x = event.pos().x()
+            shift = (self.drag_x - event_x(event)) * span / max(1, self.width() - 108)
+            self.drag_x = event_x(event)
             self.set_view(self.view_start + shift, span)
 
     def mouseReleaseEvent(self, event):
@@ -224,10 +229,11 @@ class SectionPlot(QWidget):
 
     def draw(self, painter, width, height):
         profile, units, faults, bedding, bearing = self.data
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(0, 0, width, height, QColor("white"))
         left, right, top, bottom = 72, width - 36, 54, height - 96
-        visible = lambda distance: self.view_start <= distance <= self.view_end
+        def visible(distance):
+            return self.view_start <= distance <= self.view_end
         elevations = [z for distance, z in profile if z is not None and visible(distance)]
         elevations += [row[1] for row in faults + bedding if row[1] is not None and visible(row[0])]
         if not elevations:
@@ -314,7 +320,7 @@ class SectionPlot(QWidget):
                 label_rect = QRectF(center.x()+13,center.y()-metrics.height()/2,
                                     text_width+2,metrics.height()+2)
                 painter.fillRect(label_rect,QColor(255,255,255,230))
-                painter.drawText(label_rect,Qt.AlignLeft | Qt.AlignVCenter,text)
+                painter.drawText(label_rect,Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,text)
         self.layout_boxes = boxes
         painter.restore()
         for start, end, name, color in units:
@@ -340,7 +346,7 @@ class SectionPlot(QWidget):
             output.setSize(QSize(width,height))
             output.setViewBox(QRect(0,0,width,height))
         else:
-            output = QImage(width*2,height*2,QImage.Format_RGB32)
+            output = QImage(width*2,height*2,QImage.Format.Format_RGB32)
         painter = QPainter(output)
         if not painter.isActive():
             raise ValueError("Could not open the image output.")
@@ -359,7 +365,7 @@ class CrossSectionDialog(QDialog):
         self.canvas = iface.mapCanvas()
         self.endpoints = []
         self.markers = []
-        self.section_line = QgsRubberBand(self.canvas, QgsWkbTypes.LineGeometry)
+        self.section_line = QgsRubberBand(self.canvas, QgsWkbTypes.GeometryType.LineGeometry)
         self.section_line.setColor(QColor("#245eb0"))
         self.section_line.setWidth(2)
         self.canvas.destinationCrsChanged.connect(self.draw_section_line)
@@ -367,15 +373,15 @@ class CrossSectionDialog(QDialog):
         self.tool.canvasClicked.connect(self.capture)
         self.previous_tool = None
         self.capture_crs = None
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         form = QFormLayout(self)
-        self.dem = self.layer(form,"Elevation raster in metres (band 1)",QgsMapLayerProxyModel.RasterLayer,False)
-        self.units = self.layer(form,"Geological units",QgsMapLayerProxyModel.PolygonLayer)
+        self.dem = self.layer(form,"Elevation raster in metres (band 1)",QgsMapLayerProxyModel.Filter.RasterLayer,False)
+        self.units = self.layer(form,"Geological units",QgsMapLayerProxyModel.Filter.PolygonLayer)
         self.unit_field = QgsFieldComboBox()
         self.units.layerChanged.connect(self.unit_field.setLayer)
         form.addRow("Unit name field",self.unit_field)
-        self.faults = self.layer(form,"Fault or contact lines",QgsMapLayerProxyModel.LineLayer)
-        self.bedding = self.layer(form,"Bedding measurements",QgsMapLayerProxyModel.PointLayer)
+        self.faults = self.layer(form,"Fault or contact lines",QgsMapLayerProxyModel.Filter.LineLayer)
+        self.bedding = self.layer(form,"Bedding measurements",QgsMapLayerProxyModel.Filter.PointLayer)
         self.strike, self.dip = QgsFieldComboBox(), QgsFieldComboBox()
         self.bedding.layerChanged.connect(self.bedding_fields)
         form.addRow("RHR strike field",self.strike)
@@ -429,12 +435,12 @@ class CrossSectionDialog(QDialog):
         self.status.setText("Click A on the map, then click A′.")
 
     def capture(self, point, button):
-        if button == Qt.RightButton:
+        if button == Qt.MouseButton.RightButton:
             self.endpoints.clear()
             self.draw_section_line()
             self.restore_tool()
             self.status.setText("Endpoint selection canceled.")
-        elif button == Qt.LeftButton:
+        elif button == Qt.MouseButton.LeftButton:
             current = self.canvas.mapSettings().destinationCrs()
             point = QgsCoordinateTransform(current,self.capture_crs,QgsProject.instance()).transform(point)
             self.endpoints.append(point)
@@ -449,7 +455,7 @@ class CrossSectionDialog(QDialog):
         for marker in self.markers:
             self.canvas.scene().removeItem(marker)
         self.markers.clear()
-        self.section_line.reset(QgsWkbTypes.LineGeometry)
+        self.section_line.reset(QgsWkbTypes.GeometryType.LineGeometry)
         if not self.endpoints:
             return
         transform = QgsCoordinateTransform(self.capture_crs, self.canvas.mapSettings().destinationCrs(),
@@ -457,7 +463,7 @@ class CrossSectionDialog(QDialog):
         for endpoint, color in zip(self.endpoints, ("#237a47", "#b42c36")):
             point = transform.transform(endpoint)
             marker = QgsVertexMarker(self.canvas)
-            marker.setIconType(QgsVertexMarker.ICON_CIRCLE)
+            marker.setIconType(QgsVertexMarker.IconType.ICON_CIRCLE)
             marker.setIconSize(12)
             marker.setPenWidth(2)
             marker.setColor(QColor("white"))

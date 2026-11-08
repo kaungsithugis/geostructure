@@ -81,11 +81,11 @@ class Stereonet(QWidget):
 
             draw_rose(painter, bounds, self.rose_result)
             return
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(bounds, QColor("white"))
         width, height = bounds.width(), bounds.height()
         painter.setPen(QColor("#25384a"))
-        painter.drawText(QRect(0, 5, width, 24), Qt.AlignCenter, f"{self.structure} stereoplot")
+        painter.drawText(QRect(0, 5, width, 24), Qt.AlignmentFlag.AlignCenter, f"{self.structure} stereoplot")
         center = QPointF(width / 2, height / 2 - 3)
         radius = min(width - 56, height - 140) / 2
 
@@ -143,7 +143,7 @@ class Stereonet(QWidget):
             point.setY(point.y() + painter.fontMetrics().ascent() / 2)
             painter.drawText(point, label)
         projection_name = "Equal angle (Wulff)" if self.equal_angle else "Equal area (Schmidt)"
-        painter.drawText(QRect(0, height - 47, width, 20), Qt.AlignCenter,
+        painter.drawText(QRect(0, height - 47, width, 20), Qt.AlignmentFlag.AlignCenter,
                          f"Lower hemisphere · {projection_name} · n = {len(self.measurements)}")
         legend = ["Green: line measurements"] if self.linear else []
         if self.planes:
@@ -152,11 +152,11 @@ class Stereonet(QWidget):
             legend.append("Red: poles")
         if self.analysis_caption:
             legend.append(self.analysis_caption)
-        painter.drawText(QRect(0, height - 25, width, 20), Qt.AlignCenter, " | ".join(legend))
+        painter.drawText(QRect(0, height - 25, width, 20), Qt.AlignmentFlag.AlignCenter, " | ".join(legend))
 
     def save_plot(self, path):
         output = QSaveFile(str(path))
-        if not output.open(QIODevice.WriteOnly):
+        if not output.open(QIODevice.OpenModeFlag.WriteOnly):
             return False
         bounds = QRect(0, 0, 600, 600)
         if path.suffix.lower() == ".svg":
@@ -167,7 +167,7 @@ class Stereonet(QWidget):
             device.setTitle(f"{self.structure} stereoplot")
             scale = 1
         else:
-            device = QImage(1800, 1800, QImage.Format_RGB32)
+            device = QImage(1800, 1800, QImage.Format.Format_RGB32)
             device.setDotsPerMeterX(11811)
             device.setDotsPerMeterY(11811)
             scale = 3
@@ -219,7 +219,7 @@ class StereoplotDialog(QDialog):
         self.file_button = QPushButton("Choose CSV…")
         self.file_button.clicked.connect(self.choose_csv)
         self.file_label = QLabel("No file selected")
-        self.file_label.setTextFormat(Qt.PlainText)
+        self.file_label.setTextFormat(Qt.TextFormat.PlainText)
         self.file_label.setWordWrap(True)
         self.file_row = QWidget()
         file_layout = QHBoxLayout(self.file_row)
@@ -231,7 +231,7 @@ class StereoplotDialog(QDialog):
         self.csv_rows = []
         self.csv_invalid = 0
         self.layers = QgsMapLayerComboBox()
-        self.layers.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.layers.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
         form.addRow("Point layer", self.layers)
         self.convention = QComboBox()
         self.convention.addItems(["Right-hand-rule strike", "Dip direction"])
@@ -267,8 +267,8 @@ class StereoplotDialog(QDialog):
         self.analysis_form.addRow("Analysis option", self.analysis_mode)
         self.analysis_result = QLabel()
         self.analysis_result.setWordWrap(True)
-        self.analysis_result.setTextFormat(Qt.PlainText)
-        self.analysis_result.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.analysis_result.setTextFormat(Qt.TextFormat.PlainText)
+        self.analysis_result.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.analysis_form.addRow(self.analysis_result)
         self.analysis_mode.currentIndexChanged.connect(self.run_analysis)
         self.rose_bins = QComboBox()
@@ -278,10 +278,10 @@ class StereoplotDialog(QDialog):
         self.rose_bins.currentIndexChanged.connect(self.run_analysis)
         self.analysis_data = None
         self.orientations = []
-        buttons = QDialogButtonBox(QDialogButtonBox.Close)
-        self.export = buttons.addButton("Save stereoplot…", QDialogButtonBox.ActionRole)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        self.export = buttons.addButton("Save stereoplot…", QDialogButtonBox.ButtonRole.ActionRole)
         self.export.clicked.connect(self.export_plot)
-        self.analysis_export = buttons.addButton("Save analysis CSV…", QDialogButtonBox.ActionRole)
+        self.analysis_export = buttons.addButton("Save analysis CSV…", QDialogButtonBox.ButtonRole.ActionRole)
         self.analysis_export.clicked.connect(self.export_analysis)
         self.analysis_export.setEnabled(False)
         buttons.rejected.connect(self.reject)
@@ -299,7 +299,7 @@ class StereoplotDialog(QDialog):
         self.strike.currentIndexChanged.connect(self.refresh_plot)
         self.dip.currentIndexChanged.connect(self.refresh_plot)
         active = iface.activeLayer()
-        if active and active.type() == QgsMapLayerType.VectorLayer and active.geometryType() == QgsWkbTypes.PointGeometry:
+        if active and active.type() == QgsMapLayerType.VectorLayer and active.geometryType() == QgsWkbTypes.GeometryType.PointGeometry:
             self.layers.setLayer(active)
             self.source.setCurrentIndex(1)
         self.set_fields()
@@ -398,7 +398,7 @@ class StereoplotDialog(QDialog):
         svg = "SVG vector graphic (*.svg)"
         name = self.net.structure.lower().replace(" ", "_") + "_stereoplot"
         filename, selected = QFileDialog.getSaveFileName(
-            self, "Save stereoplot", name, f"{png};;{svg}", options=QFileDialog.DontConfirmOverwrite,
+            self, "Save stereoplot", name, f"{png};;{svg}", options=QFileDialog.Option.DontConfirmOverwrite,
         )
         if not filename:
             return
@@ -406,8 +406,8 @@ class StereoplotDialog(QDialog):
         if path.suffix.lower() not in (".png", ".svg"):
             path = path.with_name(path.name + (".svg" if selected == svg else ".png"))
         if path.exists() and QMessageBox.question(
-            self, "Replace file?", f"Replace {path.name}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
-        ) != QMessageBox.Yes:
+            self, "Replace file?", f"Replace {path.name}?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No,
+        ) != QMessageBox.StandardButton.Yes:
             return
         if not self.net.save_plot(path):
             QMessageBox.warning(self, "Save stereoplot", f"Could not save {path.name}.")

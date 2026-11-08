@@ -2,7 +2,7 @@
 name=GeoStructure
 description=Map geological structures, create stereonets, analyze orientations, and generate DEM cross sections.
 about=Choose your own attribute fields to visualize geological vector data.
-version=0.12.0
+version=0.12.1
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 author=Kaung Si Thu
@@ -13,3 +13,4 @@ experimental=True
 homepage=https://github.com/kaungsithugis/geostructure#readme
 repository=https://github.com/kaungsithugis/geostructure
 tracker=https://github.com/kaungsithugis/geostructure/issues
+changelog=0.12.1: Corrected 61 Qt/QGIS scoped enum references for Qt6 migration; fixed Cross Section E731. No new analysis tools.
